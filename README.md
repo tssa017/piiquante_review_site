@@ -1,31 +1,35 @@
 # Piiquante
 
-I built a secure API for this hot sauce rating website with MongoDB, Express, and Mongoose. This was project 6 for the OpenClassrooms Web Developer path.
+I built a secure API for this hot sauce review website using MongoDB, Express, Mongoose, and Multer. This was project 6 for the OpenClassrooms Web Developer path.
 
 ## To view the project
 
-FIrst, clone the frontend for the site
+1. First, clone the frontend for the site
 
 ```bash
-git clone git@github.com:OpenClassrooms-Student-Center/Web-Developer-P6.git
+git clone git@github.com:OpenClassrooms-Student-Center/Web-Developer-P6.git frontend
 ```
 
-Then clone the backend I wrote:
+2. Then clone the backend
 
 ```bash
-git clone git@github.com:tssa017/piiquante_review_site.git
+git clone git@github.com:tssa017/piiquante_review_site.git backend
 ```
 
-Add a directory named 'images' to the root of the backend
-
-Launch the backend server with the following commands:
+3. Add images folder
 
 ```bash
 cd backend
+mkdir images
+```
+
+4. Launch the backend server with the following commands:
+
+```bash
 nodemon server
 ```
 
-Launch the frontend with the following commands:
+5. Launch the frontend with the following commands:
 
 ```bash
 cd ../frontend
