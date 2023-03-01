@@ -125,9 +125,10 @@ exports.deleteSauce = (req, res, next) => {
 // Liking and disliking of sauces
 // POST route allows user to like or dislike a sauce and saves result to database
 exports.likeSauce = (req, res, next) => {
-    console.log(req.body);
     if (req.body.like === 1) {
+        // Checks if a user has liked a sauce
         Sauce.updateOne(
+            // This method updates Sauce model in database based on the { _id: req.params.id } filter
             { _id: req.params.id },
             {
                 $inc: { likes: 1 }, // MongoDB update operaror increments likes by 1
@@ -136,6 +137,7 @@ exports.likeSauce = (req, res, next) => {
             }
         )
             .then(() => {
+                // JSON response indicates that either the sauce has been liked or that an error has occurred
                 res.status(201).json({
                     message: 'You liked this sauce!',
                 });
@@ -165,21 +167,24 @@ exports.likeSauce = (req, res, next) => {
                 });
             });
     } else {
-        // Undoing likes or dislikes
-        Sauce.findOne({ _id: req.params.id })
+        // If 'like' field in body request is neither '1' or '-1', this block executes, the user is removing their like or dislike
+        Sauce.findOne({ _id: req.params.id }) // Finds Sauce document in database based on ID
             .then((sauce) => {
                 if (sauce.usersLiked.indexOf(req.body.userId) !== -1) {
+                    // Checks usersLiked array for user ID
                     Sauce.updateOne(
                         { _id: req.params.id },
                         {
-                            $inc: { likes: -1 },
+                            $inc: { likes: -1 }, // Removes user ID from usersLiked array,
                             $pull: { usersLiked: req.body.userId },
                             _id: req.params.id,
                         }
                     )
                         .then(() =>
                             res.status(201).json({
-                                message: 'You un-liked this sauce!',
+                                // JSON response indiciates
+                                message:
+                                    'You removed your like from this sauce!',
                             })
                         )
                         .catch((error) => res.status(400).json({ error }));
