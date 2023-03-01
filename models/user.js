@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 
 const userSchema = mongoose.Schema({
-    email: { type: String, required: true, unique: true }, // 'Unique' keyword ensures same email cannot be used multiple times
+    email: { type: String, required: true, unique: true }, // Ensures same email cannot be used multiple times
     password: { type: String, required: true },
 });
 

@@ -5,6 +5,10 @@ const User = require('../models/user.js');
 const validator = require('validator');
 
 exports.signup = (req, res, next) => {
+    if (!validator.isEmail(req.body.email)) {
+        return res.status(400).json({ error: 'Invalid email address' }); // If email address is invalid, return error message, otherwise proceed
+    }
+
     // Calls bcrypt's hash function and asks it to salt the password 10 times
     bcrypt.hash(req.body.password, 10).then((hash) => {
         // Create new user
