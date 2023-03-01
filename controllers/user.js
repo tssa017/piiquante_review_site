@@ -2,6 +2,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.js');
+const validator = require('validator');
 
 exports.signup = (req, res, next) => {
     // Calls bcrypt's hash function and asks it to salt the password 10 times
