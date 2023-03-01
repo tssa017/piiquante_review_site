@@ -1,3 +1,4 @@
+const fs = require('fs'); // Gives access to functions that allow file system modification
 const Sauce = require('../models/sauce.js');
 
 // Creation and modification of sauces
@@ -18,6 +19,8 @@ exports.getAllSauces = (req, res, next) => {
 exports.createSauce = (req, res, next) => {
     req.body.sauce = JSON.parse(req.body.sauce); // Parses response object to JSON
     const url = req.protocol + '://' + req.get('host'); // To use in image file path
+    const imageUrl = req.file ? url + '/images/' + req.file.filename : '';
+
     const sauce = new Sauce({
         // Constructs new Sauce object based on JSON
         name: req.body.sauce.name,
@@ -26,7 +29,7 @@ exports.createSauce = (req, res, next) => {
         heat: req.body.sauce.heat,
         likes: req.body.sauce.likes,
         dislikes: req.body.sauce.dislikes,
-        imageUrl: url + '/images/' + req.file.filename,
+        imageUrl: imageUrl,
         mainPepper: req.body.sauce.mainPepper,
         usersLiked: req.body.sauce.usersLiked,
         usersDisliked: req.body.sauce.usersDisliked,
@@ -64,53 +67,35 @@ exports.getSingleSauce = (req, res, next) => {
 
 // PUT route modifies an existing sauce object based on its ID
 exports.modifySauce = (req, res, next) => {
-    // Creates new instance of Sauce model using id parameter from request which will be updated in database
-    let sauce = new Sauce({ _id: req.params._id });
-    // Check if there is a file attached to request
-    if (req.file) {
-        const url = req.protocol + '://' + req.get('host'); // To use in image file path
-        req.body.sauce = JSON.parse(req.body.sauce);
-        sauce = {
-            _id: req.params.id,
-            name: req.body.sauce.name,
-            manufacturer: req.body.sauce.manufacturer,
-            description: req.body.sauce.description,
-            heat: req.body.sauce.heat,
-            likes: req.body.sauce.likes,
-            dislikes: req.body.sauce.dislikes,
-            imageUrl: url + '/images/' + req.file.fileName,
-            mainPepper: req.body.sauce.mainPepper,
-            usersLiked: req.body.sauce.usersLiked,
-            usersDisliked: req.body.sauce.usersDisliked,
-            userId: req.body.sauce.userId,
-        };
-    } else {
-        sauce = {
-            // Sets properties of sauce object to values in the request body
-            _id: req.params.id,
-            name: req.body.name,
-            manufacturer: req.body.manufacturer,
-            description: req.body.description,
-            heat: req.body.heat,
-            likes: req.body.likes,
-            dislikes: req.body.dislikes,
-            imageUrl: req.body.imageUrl, // If no file is attached, imageUrl is set to the value in the request body
-            mainPepper: req.body.mainPepper,
-            usersLiked: req.body.usersLiked,
-            usersDisliked: req.body.usersDisliked,
-            userId: req.body.userId,
-        };
-    }
-    sauce
-        .updateOne({ _id: req.params.id }, sauce) // Updates Sauce corresponding to ID
-        .then(() => {
-            res.status(201).json({
-                message: 'Thing updated successfully!',
+    const sauceId = req.params.id;
+    const userId = req.auth.userId;
+    const update = req.file
+        ? {
+              // If a file is uploaded, update imageUrl along with other fields
+              ...JSON.parse(req.body.sauce), // ... Allows me to modify specific parts of req.body
+              imageUrl: `${req.protocol}://${req.get('host')}/images/${
+                  req.file.filename
+              }`,
+          }
+        : //  If no file is uploaded, update other fields only
+          { ...req.body };
+    Sauce.findOneAndUpdate(
+        { _id: sauceId, userId },
+        { ...update, _id: sauceId },
+        { new: true } // Return updated document from response
+    )
+        .then((sauce) => {
+            if (!sauce) {
+                return res.status(404).json({ error: 'Sauce not found.' });
+            }
+            res.status(200).json({
+                message: 'Sauce updated successfully!',
+                sauce,
             });
         })
         .catch((error) => {
             res.status(400).json({
-                error: error,
+                error: error.message || 'Failed to update sauce.',
             });
         });
 };
@@ -119,21 +104,40 @@ exports.modifySauce = (req, res, next) => {
 exports.deleteSauce = (req, res, next) => {
     // Search for sauce object in database that has the ID specified in params object
     Sauce.findOne({ _id: req.params.id }).then((sauce) => {
-        if (!sauce) {
-            return res.status(404).json({
-                error: new Error('No such sauce!'),
-            });
-        }
-        if (sauce.userId !== req.auth.userId) {
-            // Ensures that a user is authorised to delete a sauce (only an owner can delete) by comparing userID
-            return res.status(400).json({
-                error: new Error('Unauthorised request!'),
-            });
-        }
-        Sauce.deleteOne({ _id: req.params.id }) // Deletes Sauce corresponding to ID
+        const filename = sauce.imageUrl.split('/images/')[1];
+        fs.unlink('images/' + filename, () => {
+            // Deletes file from file system
+            Sauce.deleteOne({ _id: req.params.id })
+                .then(() => {
+                    res.status(200).json({
+                        message: 'Deleted!',
+                    });
+                })
+                .catch((error) => {
+                    res.status(400).json({
+                        error: error,
+                    });
+                });
+        });
+    });
+};
+
+// Liking and disliking of sauces
+// POST route allows user to like or dislike a sauce and saves result to database
+exports.likeSauce = (req, res, next) => {
+    console.log(req.body);
+    if (req.body.like === 1) {
+        Sauce.updateOne(
+            { _id: req.params.id },
+            {
+                $inc: { likes: 1 }, // MongoDB update operaror increments likes by 1
+                $push: { usersLiked: req.body.userId }, // MongoDB update appends userID to the usersLiked array
+                _id: req.params.id,
+            }
+        )
             .then(() => {
-                res.status(200).json({
-                    message: 'Deleted!',
+                res.status(201).json({
+                    message: 'You liked this sauce!',
                 });
             })
             .catch((error) => {
@@ -141,7 +145,63 @@ exports.deleteSauce = (req, res, next) => {
                     error: error,
                 });
             });
-    });
+    } else if (req.body.like === -1) {
+        Sauce.updateOne(
+            { _id: req.params.id },
+            {
+                $inc: { dislikes: 1 },
+                $push: { usersDisliked: req.body.userId },
+                _id: req.params.id,
+            }
+        )
+            .then(() => {
+                res.status(201).json({
+                    message: 'You disliked this sauce!',
+                });
+            })
+            .catch((error) => {
+                res.status(400).json({
+                    error: error,
+                });
+            });
+    } else {
+        // Undoing likes or dislikes
+        Sauce.findOne({ _id: req.params.id })
+            .then((sauce) => {
+                if (sauce.usersLiked.indexOf(req.body.userId) !== -1) {
+                    Sauce.updateOne(
+                        { _id: req.params.id },
+                        {
+                            $inc: { likes: -1 },
+                            $pull: { usersLiked: req.body.userId },
+                            _id: req.params.id,
+                        }
+                    )
+                        .then(() =>
+                            res.status(201).json({
+                                message: 'You un-liked this sauce!',
+                            })
+                        )
+                        .catch((error) => res.status(400).json({ error }));
+                } else if (
+                    sauce.usersDisliked.indexOf(req.body.userId) !== -1
+                ) {
+                    Sauce.updateOne(
+                        { _id: req.params.id },
+                        {
+                            $inc: { dislikes: -1 },
+                            $pull: { usersDisliked: req.body.userId },
+                            _id: req.params.id,
+                        }
+                    )
+                        .then(() =>
+                            res.status(201).json({
+                                message: 'You can like this sauce again!',
+                            })
+                        )
+                        .catch((error) => res.status(400).json({ error }));
+                }
+            })
+            .catch((error) => res.status(400).json({ error }));
+    }
 };
-
-// Liking and disliking of sauces

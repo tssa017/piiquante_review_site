@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
+const cors = require('cors');
+const helmet = require('helmet');
 require('dotenv').config();
 
 const userRoutes = require('./routes/user.js'); // Imports user route
@@ -40,6 +42,14 @@ app.use((req, res, next) => {
     );
     next();
 });
+
+app.use(cors()); // Enables cross-origin sharing in Express
+app.use(
+    helmet({
+        contentSecurityPolicy: false,
+    })
+);
+app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }));
 
 app.use('/images', express.static(path.join(__dirname, 'images'))); // This middleware sets the images folder where the file will be uploaded as static
 
