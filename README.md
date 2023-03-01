@@ -36,3 +36,6 @@ cd ../frontend
 npm install
 npm start
 ```
+
+6. Remove the instruction 'Validators.required' from line 62 in frontend/src/app/sauce-form/sauce-form.component.ts
+   This ensures image files are **not** required to make a POST request
