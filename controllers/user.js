@@ -43,7 +43,7 @@ exports.login = (req, res, next) => {
                     if (!valid) {
                         return res
                             .status(401)
-                            .json({ error: 'Mot de passe incorrect !' });
+                            .json({ error: 'Incorrect password !' });
                     }
                     // If user has valid credentials, return 200 response containing User ID and token
                     res.status(200).json({
