@@ -1,6 +1,5 @@
-const http = require('http');
+const http = require('http'); // Imports the built-in Node.js http module, which provides functionality to create HTTP servers and make HTTP requests
 const app = require('./app'); // Imports express app module
-// require('dotenv').config();
 
 const normalizePort = (val) => {
     // Function normalises port number to use for server
