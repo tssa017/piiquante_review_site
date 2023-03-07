@@ -3,7 +3,7 @@ const Sauce = require('../models/sauce.js');
 
 // Creation and modification of sauces
 // GET route that gets an array of all sauces from database
-exports.getAllSauces = (req, res, next) => {
+exports.getAllSauces = (req, res) => {
     Sauce.find()
         .then((sauces) => {
             res.status(200).json(sauces);
@@ -16,13 +16,13 @@ exports.getAllSauces = (req, res, next) => {
 };
 
 // POST route that creates a new sauce and saves to database
-exports.createSauce = (req, res, next) => {
+exports.createSauce = (req, res) => {
     req.body.sauce = JSON.parse(req.body.sauce); // Parses response object to JSON
     const url = req.protocol + '://' + req.get('host'); // To use in image file path
     const imageUrl = req.file ? url + '/images/' + req.file.filename : '';
 
+    // Constructs new Sauce object based on JSON
     const sauce = new Sauce({
-        // Constructs new Sauce object based on JSON
         name: req.body.sauce.name,
         manufacturer: req.body.sauce.manufacturer,
         description: req.body.sauce.description,
@@ -50,9 +50,9 @@ exports.createSauce = (req, res, next) => {
 };
 
 // GET route for single sauce based on its id
-exports.getSingleSauce = (req, res, next) => {
+exports.getSingleSauce = (req, res) => {
     Sauce.findOne({
-        // Searches for single Sauce document in databse whose _id matches the id parameter in the request URL
+        // Search for single Sauce document in databse whose _id matches the id parameter in the request URL
         _id: req.params.id,
     })
         .then((sauce) => {
@@ -66,23 +66,25 @@ exports.getSingleSauce = (req, res, next) => {
 };
 
 // PUT route modifies an existing sauce object based on its ID
-exports.modifySauce = (req, res, next) => {
-    const sauceId = req.params.id;
-    const userId = req.auth.userId;
-    const update = req.file
+exports.modifySauce = (req, res) => {
+    const sauceId = req.params.id; // Extracts ID of the Sauce object that is being updated from the URL parameter of the request
+    const userId = req.auth.userId; // Extracts ID of the authenticated user from the request object's auth property
+    const update = req.file // Checks if file was uploaded with sauce
         ? {
-              // If a file is uploaded, update imageUrl along with other fields
-              ...JSON.parse(req.body.sauce), // ... Allows me to modify specific parts of req.body
+              // If yes, ternary operator updates imageUrl along with other fields
+              ...JSON.parse(req.body.sauce), // Spread syntax copies the properties of req.body.sauce into the update object so that the updated properties are merged with the existing properties of the sauce object.
+              // Use template literal to construct new image URL with HTTP protocol, host, and filename
               imageUrl: `${req.protocol}://${req.get('host')}/images/${
                   req.file.filename
               }`,
           }
-        : //  If no file is uploaded, update other fields only
-          { ...req.body };
+        : //  If no file is uploaded, only updates other fields
+          { ...req.body }; // Spread syntax means I am creating a copy of the req.body object to update the Sauce object in the database, it ensures that I preserve all fields that are not being updated
     Sauce.findOneAndUpdate(
-        { _id: sauceId, userId },
-        { ...update, _id: sauceId },
-        { new: true } // Return updated document from response
+        // Searches for Sauce object
+        { _id: sauceId, userId }, // Filter specifies that the document has to have _id equal to sauceId and userId equal to userId
+        { ...update, _id: sauceId }, // Updates Sauce object with the new information provided in the update object
+        { new: true } // An option object specifying that the updated document should be returned instead of the original
     )
         .then((sauce) => {
             if (!sauce) {
@@ -90,7 +92,7 @@ exports.modifySauce = (req, res, next) => {
             }
             res.status(200).json({
                 message: 'Sauce updated successfully!',
-                sauce,
+                sauce, // Sets value of sauce to the sauce object that was just updated (shorthand)
             });
         })
         .catch((error) => {
@@ -101,7 +103,7 @@ exports.modifySauce = (req, res, next) => {
 };
 
 // DELETE route deletes an exisiting sauce object based on its ID
-exports.deleteSauce = (req, res, next) => {
+exports.deleteSauce = (req, res) => {
     // Search for sauce object in database that has the ID specified in params object
     Sauce.findOne({ _id: req.params.id }).then((sauce) => {
         const filename = sauce.imageUrl.split('/images/')[1];
@@ -124,7 +126,7 @@ exports.deleteSauce = (req, res, next) => {
 
 // Liking and disliking of sauces
 // POST route allows user to like or dislike a sauce and saves result to database
-exports.likeSauce = (req, res, next) => {
+exports.likeSauce = (req, res) => {
     if (req.body.like === 1) {
         // Checks if a user has liked a sauce
         Sauce.updateOne(
