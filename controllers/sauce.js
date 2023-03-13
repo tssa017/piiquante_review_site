@@ -1,7 +1,6 @@
-const fs = require('fs'); // Gives access to functions that allow file system modification
+const fs = require('fs'); // Allow file system modification
 const Sauce = require('../models/sauce.js');
 
-// Creation and modification of sauces
 // GET route that gets an array of all sauces from database
 exports.getAllSauces = (req, res) => {
     Sauce.find()
@@ -17,9 +16,9 @@ exports.getAllSauces = (req, res) => {
 
 // POST route that creates a new sauce and saves to database
 exports.createSauce = (req, res) => {
-    req.body.sauce = JSON.parse(req.body.sauce); // Parses response object to JSON
-    const url = req.protocol + '://' + req.get('host'); // To use in image file path
-    const imageUrl = req.file ? url + '/images/' + req.file.filename : '';
+    req.body.sauce = JSON.parse(req.body.sauce);
+    const url = req.protocol + '://' + req.get('host'); // Creates URL for image file path
+    const imageUrl = req.file ? url + '/images/' + req.file.filename : ''; // Checks if image file was uploaded with the request. If yes, the imageUrl set to url + location + filename. If no, imageUrl set to an empty string
 
     // Constructs new Sauce object based on JSON
     const sauce = new Sauce({
@@ -73,18 +72,18 @@ exports.modifySauce = (req, res) => {
         ? {
               // If yes, ternary operator updates imageUrl along with other fields
               ...JSON.parse(req.body.sauce), // Spread syntax copies the properties of req.body.sauce into the update object so that the updated properties are merged with the existing properties of the sauce object.
-              // Use template literal to construct new image URL with HTTP protocol, host, and filename
+              // Construct new image URL with HTTP protocol, host, and filename
               imageUrl: `${req.protocol}://${req.get('host')}/images/${
                   req.file.filename
               }`,
           }
         : //  If no file is uploaded, only updates other fields
-          { ...req.body }; // Spread syntax means I am creating a copy of the req.body object to update the Sauce object in the database, it ensures that I preserve all fields that are not being updated
+          { ...req.body };
     Sauce.findOneAndUpdate(
         // Searches for Sauce object
         { _id: sauceId, userId }, // Filter specifies that the document has to have _id equal to sauceId and userId equal to userId
         { ...update, _id: sauceId }, // Updates Sauce object with the new information provided in the update object
-        { new: true } // An option object specifying that the updated document should be returned instead of the original
+        { new: true } // Option object specifies that the updated document should be returned instead of the original
     )
         .then((sauce) => {
             if (!sauce) {
@@ -92,7 +91,7 @@ exports.modifySauce = (req, res) => {
             }
             res.status(200).json({
                 message: 'Sauce updated successfully!',
-                sauce, // Sets value of sauce to the sauce object that was just updated (shorthand)
+                sauce, // Sets value of sauce to the sauce object that was just updated
             });
         })
         .catch((error) => {
@@ -124,7 +123,6 @@ exports.deleteSauce = (req, res) => {
     });
 };
 
-// Liking and disliking of sauces
 // POST route allows user to like or dislike a sauce and saves result to database
 exports.likeSauce = (req, res) => {
     if (req.body.like === 1) {

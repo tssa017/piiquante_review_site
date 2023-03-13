@@ -9,7 +9,7 @@ const sauceRoutes = require('./routes/sauce.js'); // Imports sauce route
 
 const app = express();
 
-app.use(express.json()); // Makes the body of any incoming request with Content-Type application/json available in the req object
+app.use(express.json()); // Makes body of any incoming request with Content-Type application/json available in the req object
 
 // Connecting to database
 mongoose

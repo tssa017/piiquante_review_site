@@ -7,11 +7,11 @@ const MIME_TYPES = {
     'image/png': 'png',
 };
 
-// Specifies how uploaded file should be stored
+// Creates storage engine that specifies how uploaded files should be stored
 const storage = multer.diskStorage({
     // Specifies the directory where the file should be stored
     destination: (req, file, callback) => {
-        callback(null, 'images');
+        callback(null, 'images'); // Passes generated filename back to multer
     },
     // Generates unique file name for uploaded file
     filename: (req, file, callback) => {
@@ -21,5 +21,5 @@ const storage = multer.diskStorage({
     },
 });
 
-// multer middleware configured to handle a single image file
+// Multer middleware configured to handle a single image file
 module.exports = multer({ storage: storage }).single('image');
