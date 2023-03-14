@@ -18,9 +18,9 @@ git clone git@github.com:tssa017/piiquante_review_site.git backend
 
 3. Connect to MongoDB Atlas cluster and replace connection string in app.js with login details
 
-I would recommend securing this information in a .env file, for example
+I recommend securing this information in a .env file
 
-4. Add images folder
+1. Add images folder
 
 ```bash
 cd backend
