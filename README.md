@@ -16,7 +16,11 @@ git clone git@github.com:OpenClassrooms-Student-Center/Web-Developer-P6.git fron
 git clone git@github.com:tssa017/piiquante_review_site.git backend
 ```
 
-3. Add images folder
+3. Connect to MongoDB Atlas cluster and replace connection string in app.js with login details
+
+I would recommend securing this information in a .env file, for example
+
+4. Add images folder
 
 ```bash
 cd backend
